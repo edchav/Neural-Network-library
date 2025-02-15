@@ -166,15 +166,37 @@ dx_sigmoid = sigmoid.backward(grad_sigmoid)
 print("\nSigmoid Output:", output_sigmoid)
 print("Sigmoid Input Gradient:", dx_sigmoid)
 
-# class Relu(Layer):
-#     def __init__(self, ) -> None:
-#         pass
+class Relu(Layer):
+    def __init__(self):
+        """
+        Initializes a ReLU layer.
+        """
+        super().__init__()
+        self.x = None
 
-#     def forward(self, x):
-#         pass
+    def forward(self, x):
+        """
+        Forward pass of the ReLU layer.
+        
+        Parameters:
+        ----------
+        x: np.ndarray
+            The input data. The shape of x is (batch_size, input_size)
+        """
+        self.x = x
+        return np.maximum(0, x)
 
-#     def backward(self, x):
-#         pass
+    def backward(self, grad):
+        """
+        Backward pass of the ReLU layer.
+        
+        Parameters:
+        ----------
+        x: np.ndarray
+            The gradient of the loss with respect to the output of the ReLU layer. The shape of x is (batch_size, input_size)
+        """
+        grad_x = grad * (self.x > 0)
+        return grad_x
 
 # class BceLoss(Layer):
 #     def __init__(self, ) -> None:
