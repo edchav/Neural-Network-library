@@ -31,27 +31,27 @@ class Linear(Layer):
         super().__init__()
 
         # Initialize weights and bias
-        self.weights = np.random.randn(output_size, input_size) * 0.01
+        self.weights = np.random.randn(output_size, input_size) #* 0.01
         self.bias = np.zeros(output_size) ##np.random.randn(output_size)
         self.x = None
 
         ## debug print
-        print('weights should be init:', self.weights)
-        print('shape of weights:', self.weights.shape)
+        ##print('weights should be init:', self.weights)
+        ##print('shape of weights:', self.weights.shape)
 
-        print('bias should be init:', self.bias)
-        print('shape of bias:', self.bias.shape)
+        ##print('bias should be init:', self.bias)
+        ##print('shape of bias:', self.bias.shape)
 
         # set gradients to zero
         self.grad_weights = np.zeros_like(self.weights)
         self.grad_bias = np.zeros_like(self.bias)
 
         ## debug print
-        print('grad_weights should be zeros:', self.grad_weights)
-        print('shape of grad_weights:', self.grad_weights.shape)
+        ##print('grad_weights should be zeros:', self.grad_weights)
+        ##print('shape of grad_weights:', self.grad_weights.shape)
 
-        print('grad_bias should be zeros:', self.grad_bias)
-        print('shape of grad_bias:', self.grad_bias.shape)
+        ##print('grad_bias should be zeros:', self.grad_bias)
+        ##print('shape of grad_bias:', self.grad_bias.shape)
         
 
     def forward(self, x):
@@ -67,14 +67,14 @@ class Linear(Layer):
         self.x = x
 
         ## debug print
-        print('x:', x)
-        print('shape of x: ', x.shape)
+        ##print('x:', x)
+        ##print('shape of x: ', x.shape)
 
         z = np.dot(x, self.weights.T) + self.bias
 
         ## debug print
-        print('z:', z)
-        print('shape of z:', z.shape)
+        ##print('z:', z)
+        ##print('shape of z:', z.shape)
 
         return z
     
@@ -95,20 +95,20 @@ class Linear(Layer):
         self.grad_weights = np.dot(grad_z.T, self.x)
 
         ## debug print
-        print('grad_weights:', self.grad_weights)
-        print('shape of grad_weights:', self.grad_weights.shape)
+        ##print('grad_weights:', self.grad_weights)
+        ##print('shape of grad_weights:', self.grad_weights.shape)
 
         self.grad_bias = np.sum(grad_z, axis=0)
         
         ## debug print
-        print('grad_bias:', self.grad_bias)
-        print('shape of grad_bias:', self.grad_bias.shape)
+        ##print('grad_bias:', self.grad_bias)
+        ##print('shape of grad_bias:', self.grad_bias.shape)
         
         grad_x = np.dot(grad_z, self.weights)
 
         ## debug print
-        print('grad_x:', grad_x)
-        print('shape of grad_x:', grad_x.shape)
+        ##print('grad_x:', grad_x)
+        ##print('shape of grad_x:', grad_x.shape)
 
         return grad_x        
 
@@ -228,12 +228,15 @@ class BceLoss(Layer):
         return grad_y_pred
     
 class Sequential(Layer):
-    def __init__(self):
+    def __init__(self, layers=None):
         """
         Initializes a sequential model.
         """
         super().__init__()
-        self.layers = []
+        if layers is None:
+            self.layers = []
+        else:
+            self.layers = layers
     
     def add(self, layer):
         """
@@ -345,14 +348,21 @@ np.random.seed(42)
 X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.float32)
 y = np.array([[0], [1], [1], [0]], dtype=np.float32)
 
-model_sigmoid = Sequential()
-model_sigmoid.add(Linear(input_size=2, output_size=2))
-model_sigmoid.add(Sigmoid())
-model_sigmoid.add(Linear(input_size=2, output_size=1))
-model_sigmoid.add(Sigmoid())
-
+# model_sigmoid = Sequential()
+# model_sigmoid.add(Linear(input_size=2, output_size=2))
+# model_sigmoid.add(Sigmoid())
+# model_sigmoid.add(Linear(input_size=2, output_size=1))
+# model_sigmoid.add(Sigmoid())
+model_sigmoid = Sequential(
+    layers=[
+        Linear(input_size=2, output_size=2),
+        Sigmoid(),
+        Linear(input_size=2, output_size=1),
+        Sigmoid()
+    ]
+)
 loss_fn = BceLoss()
-learning_rate = 0.1
+learning_rate = 1.0
 n_epochs = 10000
 
 for epoch in range(n_epochs):
@@ -373,7 +383,10 @@ for epoch in range(n_epochs):
     if epoch % 1000 == 0:
         print(f"sigmoid loss at epoch {epoch}: {loss:.6f}")
 
-model_sigmoid.save("XOR_solved_model_sigmoid.npz")
-
 print("\nPredictions after training:")
 print(np.round(model_sigmoid.forward(X), 3))
+
+print('ground truth:')
+print(y)
+
+model_sigmoid.save("XOR_solved_model_sigmoid.npz")
