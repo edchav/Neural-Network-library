@@ -32,7 +32,8 @@ class Linear(Layer):
 
         # Initialize weights and bias
         self.weights = np.random.randn(output_size, input_size) * 0.01
-        self.bias = np.random.randn(output_size)
+        self.bias = np.zeros(output_size) ##np.random.randn(output_size)
+        self.x = None
 
         ## debug print
         print('weights should be init:', self.weights)
@@ -111,34 +112,59 @@ class Linear(Layer):
 
         return grad_x        
 
-# output size is the number of desired output features
-# input size is the number of input features based on x input
-linear_layer = Linear(input_size = 3,  output_size = 2)
+class Sigmoid(Layer):
+    def __init__(self):
+        """
+        Initializes a sigmoid layer.
+        """
+        super().__init__()
+        self.sigmoid = None
 
-# forward pass
-x = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]) # shape (2, 3)
-print('input:', x)
+    def forward(self, x):
+        """
+        Forward pass of the Sigmoid layer.
+
+        Parameters:
+        ----------
+        x: np.ndarray
+            The input data. The shape of x is (batch_size, input_size)
+        """
+        self.sigmoid = 1 / (1 + np.exp(-x))
+        return self.sigmoid
+
+    def backward(self, grad):
+        """
+        Backward pass of the Sigmoid layer.
+
+        Parameters:
+        ----------
+        grad: np.ndarray
+            The gradient of the loss with respect to the output of the sigmoid layer. The shape of x is (batch_size, input_size)
+        """
+        grad_x = grad * self.sigmoid * (1 - self.sigmoid)
+        return grad_x
+        
+# Test Linear Layer
+linear_layer = Linear(input_size=3, output_size=2)
+x = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
 output = linear_layer.forward(x)
-print('forward output:', output)
-
-# simulates gradient from the next layer
-grad_z = np.array([[1.0, 2.0], [3.0, 4.0]]) # shape (2, 2)
-
-# backward pass
+grad_z = np.array([[1.0, 2.0], [3.0, 4.0]])
 grad_x = linear_layer.backward(grad_z)
-print('input grad:', grad_x)
-print('weights grad:', linear_layer.grad_weights)
-print('bias grad:', linear_layer.grad_bias)
 
-# class Sigmoid(Layer):
-#     def __init__(self, ) -> None:
-#         pass
+print("Forward Output:", output)
+print("Input Gradient:", grad_x)
+print("Weights Gradient:", linear_layer.grad_weights)
+print("Bias Gradient:", linear_layer.grad_bias)
 
-#     def forward(self, x):
-#         pass
+# Test Sigmoid Layer
+sigmoid = Sigmoid()
+x_sigmoid = np.array([[0.5, -1.0], [2.0, 0.0]])
+output_sigmoid = sigmoid.forward(x_sigmoid)
+grad_sigmoid = np.array([[0.1, 0.2], [0.3, 0.4]])
+dx_sigmoid = sigmoid.backward(grad_sigmoid)
 
-#     def backward(self, x):
-#         pass
+print("\nSigmoid Output:", output_sigmoid)
+print("Sigmoid Input Gradient:", dx_sigmoid)
 
 # class Relu(Layer):
 #     def __init__(self, ) -> None:
