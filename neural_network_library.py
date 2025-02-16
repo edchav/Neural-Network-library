@@ -194,17 +194,18 @@ class BceLoss(Layer):
         self.y_pred_clip = None
         self.batch_size = None
 
-    def forward(self, inputs):
+    def forward(self, y_pred, y):
         """
         Forward pass of the Binary Cross-Entropy loss layer.
         
         Parameters:
         ----------
-        inputs: tuple (np.ndarray, np.ndarray)
-            - y_pred: The predicted probabilities. The shape of y_pred is (batch_size, 1)
-            - y: The true labels. The shape of y is (batch_size, 1)
+        y_pred: np.ndarray
+            The predicted values. The shape of y_pred is (batch_size, 1)
+        y: np.ndarray
+            The ground truth values. The shape of y is (batch_size, 1)
         """
-        y_pred, self.y = inputs
+        self.y = y
         self.batch_size = y_pred.shape[0]
 
         # clip the predictions to avoid log(0)
@@ -368,7 +369,7 @@ n_epochs = 10000
 for epoch in range(n_epochs):
     # Forward pass
     y_pred = model_sigmoid.forward(X)
-    loss = loss_fn.forward((y_pred, y))
+    loss = loss_fn.forward(y_pred, y)
 
     # Backward pass
     grad = loss_fn.backward()
