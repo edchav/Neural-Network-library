@@ -3,7 +3,7 @@ import numpy as np
 np.random.seed(42)
 class Layer():
     """
-    Base class for all layers
+    Base class for all layers. 
 
     """
     def __init__(self):
@@ -46,9 +46,10 @@ class Linear(Layer):
         Parameters:
         ----------
         x: np.ndarray
-            The input data. The shape of x is (batch_size, input_size)
+            The input data.
         
         """
+    
         self.x = x # cache the input data for backpropagation
 
         return np.dot(x, self.weights.T) + self.bias
@@ -60,7 +61,7 @@ class Linear(Layer):
         Parameters:
         ----------
         grad: np.ndarray
-            The gradient of the loss with respect to the output of the linear layer. The shape of grad_z is (batch_size, output_size)
+            The gradient of the loss with respect to the output of the linear layer.
         """
 
         # Compute the gradients for weights and bias
@@ -75,7 +76,7 @@ class Sigmoid(Layer):
         Initializes a sigmoid layer.
         """
         super().__init__()
-        self.x = None
+        self.x = None 
 
     def forward(self, x):
         """
@@ -84,7 +85,7 @@ class Sigmoid(Layer):
         Parameters:
         ----------
         x: np.ndarray
-            The input data. The shape of x is (batch_size, input_size)
+            The input data. 
         """
         self.x = 1 / (1 + np.exp(-x))
         return self.x
@@ -96,7 +97,7 @@ class Sigmoid(Layer):
         Parameters:
         ----------
         grad: np.ndarray
-            The gradient of the loss with respect to the output of the sigmoid layer. The shape of x is (batch_size, input_size)
+            The gradient of the loss with respect to the output of the sigmoid layer.
         """
         return grad * self.x * (1 - self.x)
 
@@ -115,7 +116,7 @@ class Tanh(Layer):
         Parameters:
         ----------
         x: np.ndarray
-            The input data. The shape of x is (batch_size, input_size)
+            The input data. 
         """
         self.x = np.tanh(x)
         return self.x
@@ -127,7 +128,7 @@ class Tanh(Layer):
         Parameters:
         ----------
         grad: np.ndarray
-            The gradient of the loss with respect to the output of the tanh layer. The shape of x is (batch_size, input_size)
+            The gradient of the loss with respect to the output of the tanh layer.
         """
         return grad * (1 - self.x ** 2)
 
@@ -146,7 +147,7 @@ class ReLU(Layer):
         Parameters:
         ----------
         x: np.ndarray
-            The input data. The shape of x is (batch_size, input_size)
+            The input data.
         """
         self.x = x
         return np.maximum(0, x)
@@ -158,8 +159,9 @@ class ReLU(Layer):
         Parameters:
         ----------
         grad: np.ndarray
-            The gradient of the loss with respect to the output of the ReLU layer. The shape of x is (batch_size, input_size)
+            The gradient of the loss with respect to the output of the ReLU layer.
         """
+
         return grad * (self.x > 0)
 
 class BceLoss(Layer):
@@ -185,9 +187,9 @@ class BceLoss(Layer):
         Parameters:
         ----------
         y_pred: np.ndarray
-            The predicted values. The shape of y_pred is (batch_size, 1)
+            The predicted values.
         y: np.ndarray
-            The ground truth values. The shape of y is (batch_size, 1)
+            The ground truth values.
         """
         self.y = y
         self.batch_size = y_pred.shape[0]
@@ -211,7 +213,48 @@ class BceLoss(Layer):
         grad_y_pred = (self.y_pred_clip - self.y) / self.batch_size # b/c if sigmoid is used in the last layer, the derivative of BCE loss w.r.t. y_pred is (y_pred - y)
         grad_y_pred = grad_y_pred * grad
         return grad_y_pred
+
+class MseLoss(Layer):
+    def __init__(self):
+        """
+        Initializes a Mean Squared Error loss layer.
+        """
+
+        super().__init__()
+        self.y = None
+        self.y_pred = None
+        self.batch_size = None
     
+    def forward(self, y_pred, y):
+        """
+        Forward pass of the Mean Squared Error loss layer.
+        
+        Parameters:
+        ----------
+        y_pred: np.ndarray
+            The predicted values.
+        y: np.ndarray
+            The ground truth values.
+        """
+
+        self.y = y
+        self.y_pred = y_pred
+        self.batch_size = y_pred.shape[0]
+        loss = np.mean((y_pred - y) ** 2)
+        return loss
+
+    def backward(self, grad=1.0):
+        """
+        Backward pass of the Mean Squared Error loss layer.
+        
+        Parameters:
+        ----------
+        grad: float
+            The gradient of the loss with respect to the output of the MSE loss layer.
+        """
+        grad_y_pred = 2 * (self.y_pred - self.y) / self.batch_size
+        return grad_y_pred * grad
+
 class Sequential(Layer):
     def __init__(self, layers=None):
         """
@@ -241,7 +284,7 @@ class Sequential(Layer):
         Parameters:
         ----------
         x: np.ndarray
-            The input data. The shape of x is (batch_size, input_size)
+            The input data.
         """
         for layer in self.layers:
             x = layer.forward(x)
@@ -293,3 +336,5 @@ class Sequential(Layer):
                 layer.weights = loaded[f'layer_{idx}_weights']
                 layer.bias = loaded[f'layer_{idx}_bias']
         print(f"Weights loaded from {filepath}")
+
+
