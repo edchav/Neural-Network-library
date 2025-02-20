@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
 
 # Feature engineering functions
 def haversine(lat1, lon1, lat2, lon2):
@@ -22,7 +22,7 @@ def create_features(df):
     df['pickup_dow_sin'] = np.sin(2*np.pi*dt.dt.dayofweek/7)
     df['pickup_dow_cos'] = np.cos(2*np.pi*dt.dt.dayofweek/7)
     df['is_weekend'] = dt.dt.dayofweek.isin([5,6]).astype(int)
-    df.drop(['id', 'dropoff_datetime', 'pickup_datetime'], axis=1, inplace=True)
+    df.drop(['id', 'dropoff_datetime', 'pickup_datetime', 'dropoff_latitude', 'dropoff_longitude'], axis=1, inplace=True)
     df['store_and_fwd_flag'] = (df['store_and_fwd_flag'] == 'Y').astype(int)
     df['vendor_id'] = df['vendor_id'].astype(int)
     return df
@@ -32,28 +32,47 @@ def preprocess_data():
 
     dataset = np.load(r"Data\nyc_taxi_data.npy", allow_pickle=True).item()
     X_train, y_train, X_test, y_test = dataset["X_train"], dataset["y_train"], dataset["X_test"], dataset["y_test"]
-    final_features = [
-        "vendor_id", "passenger_count", "store_and_fwd_flag", "distance_km",
-        "pickup_hour_sin", "pickup_hour_cos", "pickup_dow_sin", "pickup_dow_cos",
-        "is_weekend", "pickup_latitude", "pickup_longitude"
-    ]
 
     X_train = create_features(X_train)
     X_test = create_features(X_test)
 
-    scaler = StandardScaler()
-    X_train[final_features] = scaler.fit_transform(X_train[final_features])
-    X_test[final_features] = scaler.transform(X_test[final_features])
+    numerical_features = ['distance_km', 'passenger_count']
+    categorical_features = ['vendor_id', 'store_and_fwd_flag']
+    geospacial_features = ['pickup_latitude', 'pickup_longitude']
+    
+    cyclic_features = ['pickup_hour_sin', 'pickup_hour_cos', 'pickup_dow_sin', 'pickup_dow_cos']
+    binary_features = ['is_weekend']
 
-    # Convert to numpy arrays
-    X_train = X_train[final_features].values.astype(np.float32)
-    y_train = np.log1p(y_train.values).reshape(-1, 1).astype(np.float32) # Log-transform the target, helps with large values and outliers w/o it I get a lot of NaNs caused gradients to explode
-    X_test = X_test[final_features].values.astype(np.float32)
+    # Apply transformations
+    num_scaler = StandardScaler().fit(X_train[numerical_features])
+    geo_scaler = MinMaxScaler().fit(X_train[geospacial_features])
+    one_hot = OneHotEncoder(sparse_output= False, drop='first').fit(X_train[categorical_features])
+
+    # Transform features
+    X_train_num = num_scaler.transform(X_train[numerical_features])
+    X_test_num = num_scaler.transform(X_test[numerical_features])
+
+    X_train_geo = geo_scaler.transform(X_train[geospacial_features])
+    X_test_geo = geo_scaler.transform(X_test[geospacial_features])
+
+    X_train_cat = one_hot.transform(X_train[categorical_features])
+    X_test_cat = one_hot.transform(X_test[categorical_features])
+
+    X_train_cyclic = X_train[cyclic_features].values
+    X_test_cyclic = X_test[cyclic_features].values
+
+    X_train_binary = X_train[binary_features].values
+    X_test_binary = X_test[binary_features].values
+    
+    X_train_processed = np.concatenate([X_train_num, X_train_geo, X_train_cat, X_train_cyclic, X_train_binary], axis=1).astype(np.float32)
+    X_test_processed = np.concatenate([X_test_num, X_test_geo, X_test_cat, X_test_cyclic, X_test_binary], axis=1).astype(np.float32)
+
+    y_train = np.log1p(y_train.values).reshape(-1, 1).astype(np.float32)
     y_test = y_test.values.astype(np.float32)
 
     # Train/validation split
     X_train, X_val, y_train, y_val = train_test_split(
-        X_train, y_train, test_size=0.2, random_state=42
+        X_train_processed, y_train, test_size=0.2, random_state=42
     )
 
-    return X_train, X_val, y_train, y_val, X_test, y_test
+    return X_train, X_val, y_train, y_val, X_test_processed, y_test

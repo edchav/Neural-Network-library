@@ -319,7 +319,7 @@ class Sequential(Layer):
                 weights_data[f"layer_{idx}_weights"] = layer.weights
                 weights_data[f"layer_{idx}_bias"] = layer.bias
         np.savez(filepath, **weights_data)
-        print(f"Weights saved to {filepath}")
+        #print(f"Weights saved to {filepath}")
     
     def load(self, filepath):
         """
