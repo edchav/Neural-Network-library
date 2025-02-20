@@ -86,12 +86,12 @@ for epoch in range(n_epochs):
 
 print("\nPredictions after training for sigmoid:")
 print(np.round(model_sigmoid.forward(X), 3))
-model_sigmoid.save("xor_model_sigmoid.npz")
+model_sigmoid.save(r"Models\xor_model_sigmoid.npz")
 print('weights sigmoid:', model_sigmoid.layers[0].weights)
 
 print("\nPredictions after training for tanh:")
 print(np.round(model_tanh.forward(X), 3))
-model_tanh.save("xor_model_tanh.npz")
+model_tanh.save(r"Models\xor_model_tanh.npz")
 print('weights tanh:', model_tanh.layers[0].weights)
 
 print("\nGround truth:")
